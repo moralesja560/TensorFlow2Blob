@@ -18,7 +18,13 @@ lib/
 lib64/
 parts/
 sdist/
+Scripts
+openvino_env
 var/
+dataset
+dogcatmodel_2
+pizza_model
+model3_916
 wheels/
 share/python-wheels/
 *.egg-info/
