@@ -1,3 +1,5 @@
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3' 
 from fileinput import filename
 import cv2
 import os
@@ -8,16 +10,16 @@ import sys
 
 # define a video capture object
 vid = cv2.VideoCapture(1)
-
+FRAME_SHAPE = 256
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
-new_model = tf.keras.models.load_model(resource_path(r"model3_916"))
+new_model = tf.keras.models.load_model(resource_path(r"resnet_pizza"))
 
-def load_and_prep_image(filename,img_shape=256):
+def load_and_prep_image(filename,img_shape=FRAME_SHAPE):
 	"""
 	Reads an image from filename, turns it into a tensor and reshapes it to the selected shape (eg 224)
 	"""
@@ -35,13 +37,15 @@ def load_and_prep_image(filename,img_shape=256):
 font = cv2.FONT_HERSHEY_SIMPLEX
 while True:
 	ret, img = vid.read()
-	image = cv2.resize(img,dsize=(224,224), interpolation = cv2.INTER_CUBIC) 
-	final_data = new_model.predict(np.expand_dims(image, axis=0))
-	final_data = float(final_data)
-	if final_data <0.40:
+	image = cv2.resize(img,dsize=(FRAME_SHAPE,FRAME_SHAPE), interpolation = cv2.INTER_CUBIC) 
+	final_data = new_model.predict(np.expand_dims(image, axis=0),verbose=0)
+	#print(final_data)
+	final_data = final_data.item()
+	
+	if final_data <-3:
 		print(f"It's a pizza {final_data}")
 		cv2.putText(img, 'PIZZA', (10,450), font, 3, (0, 255, 0), 2, cv2.LINE_AA)
-	elif final_data > 0.70 and final_data < 0.99:
+	elif final_data> 0.70 and final_data < 10.99:
 		print(f"It's a Steak {final_data}")
 		cv2.putText(img, 'STEAK', (10,450), font, 3, (255, 0, 0), 2, cv2.LINE_AA)
 	cv2.imshow("Data",img)

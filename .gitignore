@@ -27,11 +27,14 @@ pizza_model
 model3_916
 wheels/
 share/python-wheels/
+CNN_savedmodel6
+resnet_pizza
 *.egg-info/
 .installed.cfg
 *.egg
 MANIFEST
-
+*.zip
+*.bin
 # PyInstaller
 #  Usually these files are written by a python script from a template
 #  before PyInstaller builds the exe, so as to inject date/other infos into it.
