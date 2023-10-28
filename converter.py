@@ -1,3 +1,4 @@
+# RUNS WITH OPENVINO ENVIRONMENT
 from openvino.tools import mo
 import os,sys
 from openvino.runtime import serialize
