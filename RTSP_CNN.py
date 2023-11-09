@@ -11,7 +11,7 @@ import sys
 #import depthai as dai 
 
 # define a video capture object
-vid = cv2.VideoCapture(1)
+vid = cv2.VideoCapture(0)
 FRAME_SHAPE = 256
 
 def resource_path(relative_path):
@@ -19,7 +19,7 @@ def resource_path(relative_path):
     base_path = getattr(sys, '_MEIPASS', os.path.dirname(os.path.abspath(__file__)))
     return os.path.join(base_path, relative_path)
 
-new_model = tf.keras.models.load_model(resource_path(r"resnet_pizza"))
+new_model = tf.keras.models.load_model(resource_path(r"resnet_paint"))
 
 def load_and_prep_image(filename,img_shape=FRAME_SHAPE):
 	"""
@@ -40,7 +40,8 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 while True:
 	ret, img = vid.read()
 	image = cv2.resize(img,dsize=(FRAME_SHAPE,FRAME_SHAPE), interpolation = cv2.INTER_CUBIC) 
-	final_data = new_model.predict(np.expand_dims(image, axis=0),verbose=0)
+	final_data = new_model.predict(np.expand_dims(image, axis=0),verbose=1)
+	#final_data = new_model.predict(image,verbose=0)
 	#print(final_data)
 	final_data = final_data.item()
 	

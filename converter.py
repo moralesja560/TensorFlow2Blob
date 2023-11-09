@@ -21,3 +21,4 @@ output_path = r'C:\Users\moralesjo\OneDrive - Mubea\Documents\Python_S\TensorFlo
 finished_model = mo.convert_model(saved_model_dir=path,input_shape=input_shape,source_layout=layout, mean_values=values, scale_values=scale, reverse_input_channels=True,progress=True)
 serialize(finished_model, xml_path=output_path)
 
+#-ip U8 -iml NHWC -il NCHW -oml NC -ol NC

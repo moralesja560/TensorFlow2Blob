@@ -2,10 +2,10 @@
 
 from random import shuffle
 import tensorflow as tf
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.layers import Dense,Flatten, Conv2D,MaxPool2D,Activation
-from tensorflow.keras import Sequential
+from keras.preprocessing.image import ImageDataGenerator
+from keras.optimizers import Adam
+from keras.layers import Dense,Flatten, Conv2D,MaxPool2D,Activation
+from keras import Sequential
 from tensorflow import keras
 import os, sys
 import matplotlib.pyplot as plt
@@ -72,8 +72,8 @@ resnet = ResNet101(
 resnet.trainable = False
 
 #set the directory path WORK COMPUTER
-train_dir = resource_path(r"dataset\pizza_steak\train")
-test_dir = resource_path(r"dataset\pizza_steak\test")
+train_dir = resource_path(r"dataset2\train")
+test_dir = resource_path(r"dataset2\test")
 
 print(train_dir)
 ##-----------------------The baseline model--------------------------#
@@ -294,8 +294,9 @@ def model_5(train_dir,test_dir,train_datagen,valid_datagen,epochs,batch_size):
 	
 	data_augmentation = keras.Sequential(
     [
-        keras.layers.RandomFlip("horizontal"),
-        keras.layers.RandomRotation(0.1),
+       # keras.layers.RandomFlip("horizontal"),
+        keras.layers.RandomRotation(0.3),
+		keras.layers.RandomFlip(mode="horizontal",seed=42),
         keras.layers.Rescaling(scale=1./127.5, offset=-1),
     ]
 	)
@@ -326,7 +327,7 @@ def model_5(train_dir,test_dir,train_datagen,valid_datagen,epochs,batch_size):
     optimizer = keras.optimizers.Adam(),
     loss = keras.losses.BinaryCrossentropy(from_logits=True),
     metrics=[keras.metrics.BinaryAccuracy()])
-	cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=resource_path(r"resnet_pizza"), monitor='val_binary_accuracy',save_best_only=True,save_weights_only=False,verbose=1)
+	cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=resource_path(r"resnet_paint"), monitor='binary_accuracy',save_best_only=True,save_weights_only=False,verbose=1)
 	model.fit(ds, epochs=epochs,validation_data=ds_test,validation_steps=len(ds_test),callbacks=[cp_callback],verbose=1, workers=8)
 
 
@@ -358,8 +359,8 @@ if __name__ == '__main__':
 	#plot_loss_curves(model_tr_data3)
 	#train_datagen_g,valid_datagen_g = data_transformation(zoom=0.2,shear=0.2,flip_h=True,flip_v=False,rotation=0.4,w_shift=0.2,h_shift=0.2)
 	#model_tr_data4 = model_4(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_g,valid_datagen=valid_datagen_g,epochs=50,batch_size=64)
-	model_tr_data5 = model_5(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_f,valid_datagen=valid_datagen_f,epochs=50,batch_size=16)
-	plot_loss_curves(model_tr_data5)
+	model_tr_data5 = model_5(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_f,valid_datagen=valid_datagen_f,epochs=5,batch_size=16)
+	#plot_loss_curves(model_tr_data5)
 
 
 
