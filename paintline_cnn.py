@@ -154,6 +154,7 @@ class hilo1(threading.Thread):
 				# close connection
 				print("saliendo")
 				plc.release_handle(var_handle46_1)
+				cap.release()
 				plc.close()
 				break
 	def stop(self):
