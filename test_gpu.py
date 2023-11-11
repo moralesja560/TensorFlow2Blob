@@ -8,7 +8,7 @@ from urllib.request import Request, urlopen
 import json
 from urllib.parse import quote
 from dotenv import load_dotenv
-
+from datetime import datetime
 
 load_dotenv()
 token_Tel = os.getenv('TOK_EN_BOT')
@@ -47,4 +47,6 @@ else:
     print("Please install GPU version of TF")
 
 s = tf.test.is_built_with_cuda()
-send_message(Jorge_Morales,quote(f"Reporte de CUDA: \nSu computadora entregó este resultado \n{s}"),token_Tel)
+now = datetime.now()
+dt_string = now.strftime("%d%m%y-%H%M%S")
+send_message(Jorge_Morales,quote(f"Reporte de CUDA: \nSu computadora entregó este resultado \n{s}: {dt_string}"),token_Tel)

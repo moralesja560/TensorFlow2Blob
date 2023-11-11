@@ -243,6 +243,8 @@ class hilo1(threading.Thread):
 					contador_gchs +=1
 					contador_gchs_day +=1
 					#st = time.time()
+					now = datetime.now()
+					times = now.strftime("%d%m%y-%H%M%S")
 					time.sleep(25.4)
 					crop = retrieve_img()
 					if crop == None:
@@ -261,13 +263,13 @@ class hilo1(threading.Thread):
 						final_data = final_data.item()
 						#GUARDAMOS LA IMAGEN
 						# SI ES MAYOR A 1, ENTONCES LA gch ESTA LLENA
-						if final_data >= 0:
-							cv2.imwrite(resource_path(f'resources/full/llena{final_data}.jpg'), crop)
+						if final_data >= 1:
+							cv2.imwrite(resource_path(f'resources/full/F{final_data}.{times}.jpg'), crop)
 							print(f"full image stored with {int(final_data)}")
 							gch_llena_h +=1
 							gch_llena_d +=1
 						else:
-							cv2.imwrite(resource_path(f'resources/empty/vacia{final_data}.jpg'), crop)
+							cv2.imwrite(resource_path(f'resources/empty/V{final_data}.{times}.jpg'), crop)
 							print(f"empty image stored with {int(final_data)}")
 							gch_vacia_h +=1
 							gch_vacia_d +=1
