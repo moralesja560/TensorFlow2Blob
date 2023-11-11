@@ -21,6 +21,7 @@ load_dotenv()
 token_Tel = os.getenv('TOK_EN_BOT')
 Jorge_Morales = os.getenv('JORGE_MORALES')
 Paintgroup = os.getenv('PAINTLINE')
+
 RTSP_URL = 'rtsp://root:mubea@10.65.68.2/axis-media/media.amp'
 os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;udp'
 FRAME_SHAPE = 256
@@ -59,6 +60,7 @@ def send_message(user_id, text,token):
 			return
 		else:
 			respuesta  = urlopen(Request(url))
+			pass
 	except Exception as e:
 		print(f"Ha ocurrido un error al enviar el mensaje: {e}")
 	else:

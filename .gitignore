@@ -30,6 +30,7 @@ wheels/
 share/python-wheels/
 CNN_savedmodel6
 resnet_pizza
+model_6_paintline
 resources
 resnet_paint
 *.egg-info/
