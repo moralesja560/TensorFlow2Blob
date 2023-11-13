@@ -159,10 +159,10 @@ def retrieve_img():
 		crop = frame[y:y+h, x:x+w]
 	except:
 		cap.release()
-		return None
+		return None,1
 	else:
 		cap.release()
-		return crop
+		return crop,0
 
 
 def write_log(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vacia_d):
@@ -237,7 +237,6 @@ class hilo1(threading.Thread):
 				#	state_hanger = cell1
 				#Funcion de reporte de hora y dia
 				contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d = send_reports(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
-				write_log(cell1)
 				if cell1:
 					print("sensor received")
 					contador_gchs +=1
@@ -246,8 +245,8 @@ class hilo1(threading.Thread):
 					now = datetime.now()
 					times = now.strftime("%d%m%y-%H%M%S")
 					time.sleep(25.4)
-					crop = retrieve_img()
-					if crop == None:
+					crop,result = retrieve_img()
+					if result == 1:
 						print("No hay imagen disponible")
 						state_save(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
 						continue
@@ -262,8 +261,8 @@ class hilo1(threading.Thread):
 						#SACAMOS LA INFO DE LA PREDICCION
 						final_data = final_data.item()
 						#GUARDAMOS LA IMAGEN
-						# SI ES MAYOR A 1, ENTONCES LA gch ESTA LLENA
-						if final_data >= 1:
+						# SI ES MAYOR A -0.5, ENTONCES LA gch ESTA LLENA
+						if final_data >= -0.5:
 							cv2.imwrite(resource_path(f'resources/full/F{final_data}.{times}.jpg'), crop)
 							print(f"full image stored with {int(final_data)}")
 							gch_llena_h +=1
