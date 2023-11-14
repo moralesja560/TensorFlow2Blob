@@ -125,8 +125,8 @@ def send_reports(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_v
 	if hour != int(now.strftime("%H")):
 		#send_message(Paintgroup,quote(f"Reporte de Hora: {hour}-{hour+1}: {gchs_hora}"),token_Tel)
 		send_message(Paintgroup,quote(f"Reporte de Hora {hour}-{hour+1}: \nTotal gancheras: {gchs_hora}. \nHuecos: {g_vacia_h} \nLlenas: {g_llena_h} "),token_Tel)
-		send_message(Paintgroup,quote(f"Producción de hora {hour}-{hour+1}: \nTotal Hora: {gchs_hora*20}. \nPzs Perdidas: {g_vacia_h*20} \nProduccion: {g_llena_h*20} "),token_Tel)
-		send_message(Paintgroup,quote(f"Acumulado Dia: \nTotal Dia: {gchs_dia*20}. \nPzs Perdidas: {g_vacia_d*20} \nProduccion: {g_llena_d*20} "),token_Tel)
+		send_message(Paintgroup,quote(f"Producción de hora {hour}-{hour+1}: \nTotal Hora: {(gchs_hora*20):,}. \nPzs Perdidas: {(g_vacia_h*20):,} \nProduccion: {(g_llena_h*20):,} "),token_Tel)
+		send_message(Paintgroup,quote(f"Acumulado Dia: \nTotal Dia: {(gchs_dia*20):,}. \nPzs Perdidas: {(g_vacia_d*20):,} \nProduccion: {(g_llena_d*20):,} \nEficiencia Linea {((g_llena_d*20)/(gchs_dia*20)):.2%}"),token_Tel)
 		#reset a la variable
 		gchs_hora = 0
 		g_vacia_h = 0
