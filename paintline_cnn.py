@@ -124,8 +124,9 @@ def send_reports(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_v
 	now = datetime.now()
 	if hour != int(now.strftime("%H")):
 		#send_message(Paintgroup,quote(f"Reporte de Hora: {hour}-{hour+1}: {gchs_hora}"),token_Tel)
-		send_message(Paintgroup,quote(f"Reporte de Hora: {hour}-{hour+1}: \nTotal gancheras: {gchs_hora}. \nHuecos: {g_vacia_h} \nLlenas: {g_llena_h} "),token_Tel)
-		send_message(Paintgroup,quote(f"Estimado de Producción: {hour}-{hour+1}: \nTotal Hora: {gchs_hora*20}. \nPzs Perdidas: {g_vacia_h*20} \nProduccion: {g_llena_h*20} "),token_Tel)
+		send_message(Paintgroup,quote(f"Reporte de Hora {hour}-{hour+1}: \nTotal gancheras: {gchs_hora}. \nHuecos: {g_vacia_h} \nLlenas: {g_llena_h} "),token_Tel)
+		send_message(Paintgroup,quote(f"Producción de hora {hour}-{hour+1}: \nTotal Hora: {gchs_hora*20}. \nPzs Perdidas: {g_vacia_h*20} \nProduccion: {g_llena_h*20} "),token_Tel)
+		send_message(Paintgroup,quote(f"Acumulado Dia: \nTotal Dia: {gchs_dia*20}. \nPzs Perdidas: {g_vacia_d*20} \nProduccion: {g_llena_d*20} "),token_Tel)
 		#reset a la variable
 		gchs_hora = 0
 		g_vacia_h = 0
@@ -232,15 +233,10 @@ class hilo1(threading.Thread):
 				finally:
 					break
 			else:
-				#if state_hanger != cell1:		
-				#	print(cell1)
-				#	state_hanger = cell1
 				#Funcion de reporte de hora y dia
 				contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d = send_reports(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
 				if cell1:
 					print("sensor received")
-					contador_gchs +=1
-					contador_gchs_day +=1
 					#st = time.time()
 					now = datetime.now()
 					times = now.strftime("%d%m%y-%H%M%S")
@@ -262,6 +258,8 @@ class hilo1(threading.Thread):
 						final_data = final_data.item()
 						#GUARDAMOS LA IMAGEN
 						# SI ES MAYOR A -0.5, ENTONCES LA gch ESTA LLENA
+						contador_gchs +=1
+						contador_gchs_day +=1
 						if final_data >= -0.5:
 							cv2.imwrite(resource_path(f'resources/full/F{final_data}.{times}.jpg'), crop)
 							print(f"full image stored with {int(final_data)}")
@@ -273,7 +271,9 @@ class hilo1(threading.Thread):
 							gch_vacia_h +=1
 							gch_vacia_d +=1
 						#ACTUALIZAMOS LOS CONTADORES.
+						#contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d = send_reports(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
 						state_save(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
+
 
 
 
