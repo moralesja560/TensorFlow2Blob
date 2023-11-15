@@ -13,6 +13,7 @@ from datetime import datetime
 load_dotenv()
 token_Tel = os.getenv('TOK_EN_BOT')
 Jorge_Morales = os.getenv('JORGE_MORALES')
+Paintgroup = os.getenv('PAINTLINE')
 
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
@@ -49,4 +50,19 @@ else:
 s = tf.test.is_built_with_cuda()
 now = datetime.now()
 dt_string = now.strftime("%d%m%y-%H%M%S")
-send_message(Jorge_Morales,quote(f"Reporte de CUDA: \nSu computadora entregó este resultado \n{s}: {dt_string}"),token_Tel)
+#send_message(Jorge_Morales,quote(f"Reporte de CUDA: \nSu computadora entregó este resultado \n{s}: {dt_string}"),token_Tel)
+
+
+gchs_hora = 72
+hour = 10
+gchs_dia = 831
+todai = 15
+g_llena_h =22
+g_llena_d = 628
+g_vacia_h =50
+g_vacia_d = 203
+g_caidas = 79 - gchs_hora
+pzas_g_caidas = (79-gchs_hora)*20
+
+send_message(Paintgroup,quote(f"Producción de hora {hour}-{hour+1}: \nMeta Hora: 79 / 1,580 pz \n(-) Gch perdidas {(g_caidas)} / {(pzas_g_caidas):,} pz. \n(-)Huecos: {g_vacia_h} / {(g_vacia_h*20):,} pz. \n(=)Produccion: {g_llena_h} / {(g_llena_h*20):,} pz."),token_Tel)
+send_message(Paintgroup,quote(f"Acumulado Hoy: \nMeta {((hour+1)*79*20):,} pz. \n(-) Pz x Gch perd {((hour+1)*79*20)-(gchs_dia*20):,} pz. \n(-) Huecos: {(g_vacia_d*20):,} pz. \n(=) Produccion: {(g_llena_d*20):,} pz. \nEficiencia Linea {((g_llena_d*20)/(gchs_dia*20)):.2%} \nEstimación para el final del día: {(((g_llena_d*20)/(hour+1))*24):,.0f} pz."),token_Tel)

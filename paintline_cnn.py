@@ -23,11 +23,12 @@ Jorge_Morales = os.getenv('JORGE_MORALES')
 Paintgroup = os.getenv('PAINTLINE')
 
 RTSP_URL = 'rtsp://root:mubea@10.65.68.2/axis-media/media.amp'
+DELAY_SENSOR = 25.4
 os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;udp'
 FRAME_SHAPE = 256
 #Pandas DataFrame dictionaries
 pd_dict = {'timestamp' : ['0'], 'G hora' : ['0'],'Hora' : ['0'],'G dia' : ['0'],'Dia' : ['0'],'G llena h' : ['0'],'G llena d' : ['0'],'G vacia h' : ['0'], 'G vacia d' : ['0']}
-
+pd_dict2 = {'timestamp' : ['0']}
 
 
 def resource_path(relative_path):
@@ -132,8 +133,9 @@ def send_reports(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_v
 		else:
 			pzas_g_caidas = 0
 			g_caidas = 0
-		send_message(Paintgroup,quote(f"Producción de hora {hour}-{hour+1}: \nTotal Hora: {gchs_hora} / {(gchs_hora*20):,} pz. \nGch perdidas {(g_caidas)} / {(pzas_g_caidas*20):,} \nHuecos: {g_vacia_h} / {(g_vacia_h*20):,} pz. \nProduccion: {g_llena_h} / {(g_llena_h*20):,} pz."),token_Tel)
-		send_message(Paintgroup,quote(f"Acumulado Hoy: \nObjetivo: {(gchs_dia*20):,} pz. \nHuecos: {(g_vacia_d*20):,} pz. \nProduccion: {(g_llena_d*20):,} pz. \nEficiencia Linea {((g_llena_d*20)/(gchs_dia*20)):.2%} \nEstimación para el final del día: {(((g_llena_d*20)/(hour+1))*24):,.0f} pz."),token_Tel)
+		#send_message(Paintgroup,quote(f"Producción de hora {hour}-{hour+1}: \nTotal Hora: {gchs_hora} / {(gchs_hora*20):,} pz. \nGch perdidas {(g_caidas)} / {(pzas_g_caidas):,} pz. \nHuecos: {g_vacia_h} / {(g_vacia_h*20):,} pz. \nProduccion: {g_llena_h} / {(g_llena_h*20):,} pz."),token_Tel)
+		send_message(Paintgroup,quote(f"Producción de hora {hour}-{hour+1}: \nMeta Hora: 79 / 1,580 pz \n(-) Gch perdidas {(g_caidas)} / {(pzas_g_caidas):,} pz. \n(-) Huecos: {g_vacia_h} / {(g_vacia_h*20):,} pz. \n(=)Produccion: {g_llena_h} / {(g_llena_h*20):,} pz."),token_Tel)
+		send_message(Paintgroup,quote(f"Acumulado Hoy: \nMeta {((hour+1)*79*20):,} pz. \n(-) Pz x Gch perd {((hour+1)*79*20)-(gchs_dia*20):,} pz. \n(-) Huecos: {(g_vacia_d*20):,} pz. \n(=) Produccion: {(g_llena_d*20):,} pz. \nEficiencia Linea {((g_llena_d*20)/((hour+1)*79*20)):.2%} \nEst. para final del día: {(((g_llena_d*20)/(hour+1))*24):,.0f} pz."),token_Tel)
 		#se escribe el reporte
 		print(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vacia_d)
 		write_log(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vacia_d)
@@ -158,7 +160,7 @@ def send_reports(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_v
 	return gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vacia_d
 
 def retrieve_img():
-	print("processing image")
+	
 	cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
 	_, frame = cap.read()
 	y=0
@@ -174,6 +176,26 @@ def retrieve_img():
 		cap.release()
 		return crop,0
 
+def write_log_gch():
+	now = datetime.now()
+	dt_string = now.strftime("%d/%m/%Y %H:%M:%S.%f")
+	#print (dt_string)
+	#print("date and time =", dt_string)	
+	mis_docs = My_Documents(5)
+	#ruta = str(mis_docs)+ r"\paintline.txt"
+	pd_ruta = str(mis_docs)+ r"\paintline_missing_df.csv"
+	#file_exists = os.path.exists(ruta)
+	pd_file_exists = os.path.exists(pd_ruta)
+	#check if pandas DataFrame exists to load the stuff or to create with dummy data.
+	if pd_file_exists:
+		pd_log = pd.read_csv(pd_ruta)
+	else:
+		pd_log = pd.DataFrame(pd_dict2)
+
+	new_row = {'timestamp' : [dt_string]}
+	new_row_pd = pd.DataFrame(new_row)
+	pd_concat = pd.concat([pd_log,new_row_pd])
+	pd_concat.to_csv(pd_ruta,index=False)
 
 def write_log(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vacia_d):
 	now = datetime.now()
@@ -221,6 +243,8 @@ class hilo1(threading.Thread):
 	def run(self):
 		#arranca con los datos guardados
 		contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d = state_recover()
+		before_gch = 0
+		#carga el modelo
 		print("loading model")
 		new_model = tf.keras.models.load_model(resource_path(r"resnet_paint"))
 		print("model_loaded")
@@ -245,24 +269,37 @@ class hilo1(threading.Thread):
 				#Funcion de reporte de hora y dia
 				contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d = send_reports(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
 				if cell1:
-					print("sensor received")
-					#st = time.time()
+					if before_gch == 0:
+						before_gch = time.time()
+						start = 0
+					else:
+						start = time.time()
+						print(int(start - before_gch))
+						if (start - before_gch) > 47:
+							print("ganchera timeout")
+							write_log_gch()
+						before_gch = start
+
+
+					print(f"sensor received")
 					now = datetime.now()
 					times = now.strftime("%d%m%y-%H%M%S")
-					time.sleep(25.4)
+					time.sleep(DELAY_SENSOR)
 					crop,result = retrieve_img()
 					if result == 1:
 						print("No hay imagen disponible")
 						state_save(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
 						continue
 					else:
-						#et = time.time()
-						#ts = str(et - st-1)
+						end1 = time.time()
+						print(f"image processed {(end1 - start - DELAY_SENSOR):.3f}")
 						#Aqui es donde movemos el asunto
 						# PASO 1: IMAGEN SE REDUCE A 256X256
 						image = cv2.resize(crop,dsize=(FRAME_SHAPE,FRAME_SHAPE), interpolation = cv2.INTER_CUBIC) 
 						# METEMOS A LA RED NEURONAL
 						final_data = new_model.predict(np.expand_dims(image, axis=0),verbose=0)
+						end2 = time.time()
+						print(f"NN finished {(end2 - end1):.3f}")
 						#SACAMOS LA INFO DE LA PREDICCION
 						final_data = final_data.item()
 						#GUARDAMOS LA IMAGEN
@@ -282,7 +319,8 @@ class hilo1(threading.Thread):
 						#ACTUALIZAMOS LOS CONTADORES.
 						#contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d = send_reports(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
 						state_save(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
-
+						end3 = time.time()
+						print(f"Waiting")
 
 
 
