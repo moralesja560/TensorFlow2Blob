@@ -124,22 +124,31 @@ def send_reports(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_v
 	now = datetime.now()
 	if hour != int(now.strftime("%H")):
 		#send_message(Paintgroup,quote(f"Reporte de Hora: {hour}-{hour+1}: {gchs_hora}"),token_Tel)
-		send_message(Paintgroup,quote(f"Reporte de Hora {hour}-{hour+1}: \nTotal gancheras: {gchs_hora}. \nHuecos: {g_vacia_h} \nLlenas: {g_llena_h} "),token_Tel)
-		send_message(Paintgroup,quote(f"Producción de hora {hour}-{hour+1}: \nTotal Hora: {(gchs_hora*20):,}. \nPzs Perdidas: {(g_vacia_h*20):,} \nProduccion: {(g_llena_h*20):,} "),token_Tel)
-		send_message(Paintgroup,quote(f"Acumulado Dia: \nTotal Dia: {(gchs_dia*20):,}. \nPzs Perdidas: {(g_vacia_d*20):,} \nProduccion: {(g_llena_d*20):,} \nEficiencia Linea {((g_llena_d*20)/(gchs_dia*20)):.2%}"),token_Tel)
+		#send_message(Paintgroup,quote(f"Reporte de Hora {hour}-{hour+1}: \nTotal gancheras: {gchs_hora}. \nHuecos: {g_vacia_h} \nLlenas: {g_llena_h} "),token_Tel)
+		#send_message(Paintgroup,quote(f"Producción de hora {hour}-{hour+1}: \nTotal Hora: {(gchs_hora*20):,} pz. \nPzs Huecos: {(g_vacia_h*20):,} pz. \nProduccion: {(g_llena_h*20):,} pz."),token_Tel)
+		if gchs_hora < 79:
+			g_caidas = 79 - gchs_hora
+			pzas_g_caidas = (79 - gchs_hora) *20
+		else:
+			pzas_g_caidas = 0
+			g_caidas = 0
+		send_message(Paintgroup,quote(f"Producción de hora {hour}-{hour+1}: \nTotal Hora: {gchs_hora} / {(gchs_hora*20):,} pz. \nGch perdidas {(g_caidas)} / {(pzas_g_caidas*20):,} \nHuecos: {g_vacia_h} / {(g_vacia_h*20):,} pz. \nProduccion: {g_llena_h} / {(g_llena_h*20):,} pz."),token_Tel)
+		send_message(Paintgroup,quote(f"Acumulado Hoy: \nObjetivo: {(gchs_dia*20):,} pz. \nHuecos: {(g_vacia_d*20):,} pz. \nProduccion: {(g_llena_d*20):,} pz. \nEficiencia Linea {((g_llena_d*20)/(gchs_dia*20)):.2%} \nEstimación para el final del día: {(((g_llena_d*20)/(hour+1))*24):,.0f} pz."),token_Tel)
+		#se escribe el reporte
+		print(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vacia_d)
+		write_log(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vacia_d)
 		#reset a la variable
 		gchs_hora = 0
 		g_vacia_h = 0
 		g_llena_h = 0
 		#se actualiza la hora
 		hour = int(now.strftime("%H"))
-		#se escribe el reporte
-		write_log(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vacia_d)
+		
 					
 	if todai != int(now.strftime("%d")):
 		#send_message(Paintgroup,quote(f"Reporte del día {todai}: {gchs_dia}"),token_Tel)
-		send_message(Paintgroup,quote(f"Reporte del día {todai} : \nTotal gancheras: {gchs_dia}. \nHuecos: {g_vacia_d} \nLlenas: {g_llena_d} "),token_Tel)
-		send_message(Paintgroup,quote(f"Estimado de Producción día: {todai}: \nTotal: {gchs_dia*20}. \nPzs Perdidas: {g_vacia_d*20} \nProduccion: {g_llena_d*20} "),token_Tel)
+		send_message(Paintgroup,quote(f"Reporte del día {todai} : Cap Instalada: 1896 gch \nTotal gancheras: {(gchs_dia):,}. \nGch perdidas {(1896-gchs_dia):,} \nHuecos: {g_vacia_d} \nLlenas: {g_llena_d} "),token_Tel)
+		send_message(Paintgroup,quote(f"Reporte de Producción día: {todai}: Cap Instalada: 37,920 pz. \nTotal: {(gchs_dia*20):,}. \nPzs perdidas {((1896-gchs_dia)*20):,} \nPzs Huecos: {(g_vacia_d*20):,} \nProduccion: {(g_llena_d*20):,} "),token_Tel)
 		#reset a la variable
 		gchs_dia = 0
 		g_vacia_d = 0
@@ -253,7 +262,7 @@ class hilo1(threading.Thread):
 						# PASO 1: IMAGEN SE REDUCE A 256X256
 						image = cv2.resize(crop,dsize=(FRAME_SHAPE,FRAME_SHAPE), interpolation = cv2.INTER_CUBIC) 
 						# METEMOS A LA RED NEURONAL
-						final_data = new_model.predict(np.expand_dims(image, axis=0),verbose=1)
+						final_data = new_model.predict(np.expand_dims(image, axis=0),verbose=0)
 						#SACAMOS LA INFO DE LA PREDICCION
 						final_data = final_data.item()
 						#GUARDAMOS LA IMAGEN
