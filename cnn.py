@@ -276,10 +276,10 @@ def model_4(train_dir,test_dir,train_datagen,valid_datagen,epochs,batch_size):
 		tf.keras.layers.Dense(1,activation='sigmoid')  
 	])
 
-	model.compile(loss="binary_crossentropy",optimizer=tf.keras.optimizers.Adam(),metrics=['binary accuracy'])
+	model.compile(loss=keras.losses.BinaryCrossentropy(from_logits=True),optimizer=tf.keras.optimizers.Adam(),metrics=[keras.metrics.BinaryAccuracy()])
 
 	#callbacks
-	cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=resource_path(r"pizza_model4"), monitor='val_accuracy',save_best_only=True,save_weights_only=False,verbose=1)
+	cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=resource_path(r"cnn_normal_paintline"), monitor='binary_accuracy',save_best_only=True,save_weights_only=False,verbose=1)
 	#early_cb = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',min_delta=0.01,patience=3,verbose=1,mode='max')
 	#lr_scheduler = tf.keras.callbacks.LearningRateScheduler(lambda epoch: 0.001 * 0.5 * ( 1 + math.cos( epoch * (math.pi))/(594)))
 
@@ -330,7 +330,44 @@ def model_5(train_dir,test_dir,train_datagen,valid_datagen,epochs,batch_size):
 	cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=resource_path(r"resnet_paint"), monitor='binary_accuracy',save_best_only=True,save_weights_only=False,verbose=1)
 	model.fit(ds, epochs=epochs,validation_data=ds_test,validation_steps=len(ds_test),callbacks=[cp_callback],verbose=1, workers=8)
 
+def model_6(train_dir,test_dir,train_datagen,valid_datagen,epochs,batch_size):
+	train_data = train_datagen.flow_from_directory(
+    	directory=train_dir,
+    	batch_size=batch_size,
+    	target_size=(224,224),
+    	class_mode = 'binary',
+    	seed=42
+	)
 
+	valid_data = valid_datagen.flow_from_directory(
+	    directory=test_dir,
+	    batch_size=batch_size,
+	    target_size=(224,224),
+	    class_mode = 'binary',
+	    seed=42
+	)
+
+
+	model_base = tf.keras.models.Sequential([
+	Conv2D(filters=10, kernel_size=3, strides=(1,1),padding= 'valid', activation = "relu", input_shape =(224,224,3)),
+	Conv2D(filters=10, kernel_size=3, activation = "relu"),
+	tf.keras.layers.MaxPool2D(pool_size=2,padding="valid"),
+	tf.keras.layers.Conv2D(10,3,activation="relu"),
+	tf.keras.layers.Conv2D(10,3,activation="relu"),
+	tf.keras.layers.MaxPool2D(pool_size=2,padding="valid"),
+	tf.keras.layers.Flatten(),
+	tf.keras.layers.Dense(1, activation='sigmoid')
+	])
+
+	model_base.compile(loss="binary_crossentropy",optimizer=tf.keras.optimizers.Adam(),metrics=['accuracy'])
+
+	#callbacks
+	cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=resource_path(r"model_6_paintline"), monitor='accuracy',save_best_only= True,save_weights_only=False,verbose=1)
+	#early_cb = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',min_delta=0.01,patience=2,verbose=1,mode='max')
+	#lr_scheduler = tf.keras.callbacks.LearningRateScheduler(lambda epoch: 0.001 * 0.5 * ( 1 + math.cos( epoch * (math.pi))/(594)))
+
+	data_model = model_base.fit(train_data,epochs=epochs,steps_per_epoch=len(train_data),validation_data=valid_data,validation_steps=len(valid_data),callbacks=[cp_callback],verbose=1)
+	return data_model
 
 def data_transformation(zoom,shear,flip_v,flip_h,rotation,w_shift,h_shift):
 	train_datagen = ImageDataGenerator(
@@ -357,10 +394,12 @@ if __name__ == '__main__':
 	#plot_loss_curves(model_tr_data2)
 	#model_tr_data3 = model_3(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_f,valid_datagen=valid_datagen_f,epochs=50,batch_size=16)
 	#plot_loss_curves(model_tr_data3)
-	#train_datagen_g,valid_datagen_g = data_transformation(zoom=0.2,shear=0.2,flip_h=True,flip_v=False,rotation=0.4,w_shift=0.2,h_shift=0.2)
-	#model_tr_data4 = model_4(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_g,valid_datagen=valid_datagen_g,epochs=50,batch_size=64)
-	model_tr_data5 = model_5(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_f,valid_datagen=valid_datagen_f,epochs=5,batch_size=16)
+	#rain_datagen_g,valid_datagen_g = data_transformation(zoom=0.2,shear=0.2,flip_h=True,flip_v=False,rotation=0.4,w_shift=0.2,h_shift=0.2)
+	#model_tr_data4 = model_4(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_g,valid_datagen=valid_datagen_g,epochs=50,batch_size=16)
+	#model_tr_data5 = model_5(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_f,valid_datagen=valid_datagen_f,epochs=5,batch_size=16)
 	#plot_loss_curves(model_tr_data5)
+	model_tr_data6 = model_6(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_f,valid_datagen=valid_datagen_f,epochs=5,batch_size=32)
+	plot_loss_curves(model_tr_data6)
 
 
 
