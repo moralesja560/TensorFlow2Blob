@@ -1,7 +1,9 @@
 from roboflow import Roboflow
-rf = Roboflow(api_key="iASLXL1zT7I5Xe4TdpEV")
+rf = Roboflow(api_key="")
 project = rf.workspace().project("spring-detection-9x7be")
 model = project.version(1).model
+
+# inferss#iASLXL1zT7I5Xe4TdpEVlocal imagespring-detection-9x7be
 
 # infer on a local image
 print(model.predict(r"E:\imagenes paintline\resources\full\llena1.63279390335083.jpg", confidence=40, overlap=30).json())
@@ -19,8 +21,8 @@ import numpy as np
 
 if __name__ == '__main__':
     # instantiating an object (rf) with the RoboflowOak module
-    rf = RoboflowOak(model="spring-detection-9x7be", confidence=0.6, overlap=0.8,
-    version="1", api_key="iASLXL1zT7I5Xe4TdpEV", rgb=True,
+    rf = RoboflowOak(model="", confidence=0.6, overlap=0.8,
+    version="1", api_key="", rgb=True,
     depth=True, device=None, blocking=True)
     # Running our model and displaying the video output with detections
     while True:
