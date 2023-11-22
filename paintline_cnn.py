@@ -23,7 +23,7 @@ Jorge_Morales = os.getenv('JORGE_MORALES')
 Paintgroup = os.getenv('PAINTLINE')
 
 RTSP_URL = 'rtsp://root:mubea@10.65.68.2/axis-media/media.amp'
-DELAY_SENSOR = 25.2
+DELAY_SENSOR = 25.4
 os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;udp'
 FRAME_SHAPE = 256
 #Pandas DataFrame dictionaries
@@ -159,7 +159,8 @@ def send_reports(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_v
 		todai = int(now.strftime("%d"))
 	return gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vacia_d
 
-def retrieve_img(cap):
+def retrieve_img():
+	cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
 	y=0
 	x=0
 	h=1080
@@ -174,9 +175,10 @@ def retrieve_img(cap):
 			print(f"intento {x}")
 			continue
 		else:
-			#cap.release()
+			cap.release()
 			return crop,0
 	return None,1
+	cap.release()
 
 def write_log_gch():
 	now = datetime.now()
@@ -232,7 +234,6 @@ class hilo1(threading.Thread):
 		#arranca con los datos guardados
 		contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d = state_recover()
 		before_gch = 0
-		cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
 		#carga el modelo
 		start11 = time.time()
 		print("loading model")
@@ -264,13 +265,12 @@ class hilo1(threading.Thread):
 					#vacias por d
 					plc.write_by_name("", gch_vacia_d, plc_datatype=pyads.PLCTYPE_UINT,handle=var_handle_empty_day)	
 					end10 = time.time()
-					print(f" PLC write time {(end10 - start10):.3f}")
+					print(f"PLC write time {(end10 - start10):.3f}")
 
 			except Exception as e:
 				#send_message(Jorge_Morales,quote(f"Falla de app: {e}. Si es el 1861, por favor conectarse al PLC via Twincat System Manager. Con eso se hace la conexión ADS"),token_Tel)
 				print(e)
 				try:
-					cap.release()
 					plc.release_handle(hanger_counter)
 					plc.release_handle(var_handle_actual_hook)
 					plc.release_handle(var_handle_full_hr)
@@ -302,7 +302,7 @@ class hilo1(threading.Thread):
 					now = datetime.now()
 					times = now.strftime("%d%m%y-%H%M%S")
 					time.sleep(DELAY_SENSOR)
-					crop,result = retrieve_img(cap)
+					crop,result = retrieve_img()
 					if result == 1:
 						print("No hay imagen disponible")
 						send_message(Jorge_Morales,quote(f"No se pudo la imagen en Pintura."),token_Tel)
@@ -347,7 +347,6 @@ class hilo1(threading.Thread):
 			if self._stop_event.is_set():
 				# close connection
 				print("saliendo")
-				cap.release()
 				plc.release_handle(hanger_counter)
 				plc.release_handle(var_handle_actual_hook)
 				plc.release_handle(var_handle_full_hr)
