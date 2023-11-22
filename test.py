@@ -1,16 +1,12 @@
-import time
-from datetime import datetime
-x = 2561221.2151521
+import pyads
 
-import time
-
-start = time.time()
-print("hello")
-time.sleep(1)
-end = time.time()
-print(f"{(end - start):.3f} secs")
-time.sleep(2)
-end2 = time.time()
-print(f"{(end2 - end):.3f} secs")
-if (end2 - end) > 2:
-	print("si es mayor")
+pyads.open_port()
+ams_net_id = pyads.get_local_address().netid
+print(ams_net_id)
+pyads.close_port()
+plc=pyads.Connection('10.65.96.185.1.1', 801, '10.65.96.185')
+plc.open()
+var_handle_actual_hook = plc.get_handle('SCADA.This_hook')
+plc.write_by_name("", 1, plc_datatype=pyads.PLCTYPE_UINT,handle=var_handle_actual_hook)
+plc.release_handle(var_handle_actual_hook)
+plc.close()

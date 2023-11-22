@@ -23,7 +23,7 @@ Jorge_Morales = os.getenv('JORGE_MORALES')
 Paintgroup = os.getenv('PAINTLINE')
 
 RTSP_URL = 'rtsp://root:mubea@10.65.68.2/axis-media/media.amp'
-DELAY_SENSOR = 25.4
+DELAY_SENSOR = 25.2
 os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;udp'
 FRAME_SHAPE = 256
 #Pandas DataFrame dictionaries
@@ -159,22 +159,24 @@ def send_reports(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_v
 		todai = int(now.strftime("%d"))
 	return gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vacia_d
 
-def retrieve_img():
-	
-	cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
-	_, frame = cap.read()
+def retrieve_img(cap):
 	y=0
 	x=0
 	h=1080
 	w=1350
-	try:
-		crop = frame[y:y+h, x:x+w]
-	except:
-		cap.release()
-		return None,1
-	else:
-		cap.release()
-		return crop,0
+	for x in range(3):
+		success, frame = cap.read()
+		try:
+			crop = frame[y:y+h, x:x+w]
+		except:
+			#cap.release()
+			#return None,1
+			print(f"intento {x}")
+			continue
+		else:
+			#cap.release()
+			return crop,0
+	return None,1
 
 def write_log_gch():
 	now = datetime.now()
@@ -207,20 +209,6 @@ def write_log(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_vaci
 	pd_ruta = str(mis_docs)+ r"\paintlinehr_df.csv"
 	#file_exists = os.path.exists(ruta)
 	pd_file_exists = os.path.exists(pd_ruta)
-	"""
-	if file_exists == True:
-		with open(ruta, "a+") as file_object:
-			# Move read cursor to the start of file.
-			file_object.seek(0)
-			# If file is not empty then append '\n'
-			data = file_object.read(100)
-			if len(data) > 0 :
-				file_object.write("\n")
-				file_object.write(f" timestamp {dt_string}: Cell1: {cell1}")
-	else:
-		with open(ruta,"w+") as f:
-				f.write(f" timestamp {dt_string}: Cell1: {cell1}")
-	"""
 	#check if pandas DataFrame exists to load the stuff or to create with dummy data.
 	if pd_file_exists:
 		pd_log = pd.read_csv(pd_ruta)
@@ -244,22 +232,51 @@ class hilo1(threading.Thread):
 		#arranca con los datos guardados
 		contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d = state_recover()
 		before_gch = 0
+		cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
 		#carga el modelo
+		start11 = time.time()
 		print("loading model")
 		new_model = tf.keras.models.load_model(resource_path(r"resnet_paint"))
-		print("model_loaded")
+		end11 = time.time()
+		print(f"NN Load time {(end11 - start11):.3f}")
 		#inicialización de PLC
 		while True:
 			try:
 				#sensor
 				plc.open()
-				var_handle46_1 = plc.get_handle('.I_Hang_Counter')
-				cell1 = plc.read_by_name("", plc_datatype=pyads.PLCTYPE_BOOL,handle=var_handle46_1)
+				#handles
+				hanger_counter = plc.get_handle('.I_Hang_Counter')
+				var_handle_actual_hook = plc.get_handle('SCADA.This_hook')
+				var_handle_full_hr = plc.get_handle('SCADA.Full_hooks_hr')
+				var_handle_full_day = plc.get_handle('SCADA.Full_hooks_day')
+				var_handle_empty_hr = plc.get_handle('SCADA.Empty_hooks_hr')
+				var_handle_empty_day = plc.get_handle('SCADA.Empty_hooks_day')
+				#estado del sensor
+				cell1 = plc.read_by_name("", plc_datatype=pyads.PLCTYPE_BOOL,handle=hanger_counter)
+				if cell1:
+					start10 = time.time()
+					#llenas por h
+					plc.write_by_name("", gch_llena_h, plc_datatype=pyads.PLCTYPE_UINT,handle=var_handle_full_hr)
+					#llenas por d
+					plc.write_by_name("", gch_llena_d, plc_datatype=pyads.PLCTYPE_UINT,handle=var_handle_full_day)
+					#vacias por h
+					plc.write_by_name("", gch_vacia_h, plc_datatype=pyads.PLCTYPE_UINT,handle=var_handle_empty_hr)
+					#vacias por d
+					plc.write_by_name("", gch_vacia_d, plc_datatype=pyads.PLCTYPE_UINT,handle=var_handle_empty_day)	
+					end10 = time.time()
+					print(f" PLC write time {(end10 - start10):.3f}")
+
 			except Exception as e:
 				#send_message(Jorge_Morales,quote(f"Falla de app: {e}. Si es el 1861, por favor conectarse al PLC via Twincat System Manager. Con eso se hace la conexión ADS"),token_Tel)
 				print(e)
 				try:
-					plc.release_handle(var_handle46_1)
+					cap.release()
+					plc.release_handle(hanger_counter)
+					plc.release_handle(var_handle_actual_hook)
+					plc.release_handle(var_handle_full_hr)
+					plc.release_handle(var_handle_full_day)
+					plc.release_handle(var_handle_empty_hr)
+					plc.release_handle(var_handle_empty_day)
 					plc.close()
 				except:
 					print("couldnt close")
@@ -285,9 +302,10 @@ class hilo1(threading.Thread):
 					now = datetime.now()
 					times = now.strftime("%d%m%y-%H%M%S")
 					time.sleep(DELAY_SENSOR)
-					crop,result = retrieve_img()
+					crop,result = retrieve_img(cap)
 					if result == 1:
 						print("No hay imagen disponible")
+						send_message(Jorge_Morales,quote(f"No se pudo la imagen en Pintura."),token_Tel)
 						state_save(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
 						continue
 					else:
@@ -306,28 +324,36 @@ class hilo1(threading.Thread):
 						# SI ES MAYOR A -0.5, ENTONCES LA gch ESTA LLENA
 						contador_gchs +=1
 						contador_gchs_day +=1
-						if final_data >= -0.5:
+						if final_data >= -0.9:
 							cv2.imwrite(resource_path(f'resources/full/F{final_data}.{times}.jpg'), crop)
 							print(f"full image stored with {int(final_data)}")
 							gch_llena_h +=1
 							gch_llena_d +=1
+							plc.write_by_name("", 1, plc_datatype=pyads.PLCTYPE_UINT,handle=var_handle_actual_hook)	
 						else:
 							cv2.imwrite(resource_path(f'resources/empty/V{final_data}.{times}.jpg'), crop)
 							print(f"empty image stored with {int(final_data)}")
 							gch_vacia_h +=1
 							gch_vacia_d +=1
+							plc.write_by_name("", 2, plc_datatype=pyads.PLCTYPE_UINT,handle=var_handle_actual_hook)	
 						#ACTUALIZAMOS LOS CONTADORES.
 						#contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d = send_reports(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
 						state_save(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
 						end3 = time.time()
-						print(f"Waiting")
+						print(f"Waiting: Last Cycle Time {(end3 - start):.3f}")
 
 
 
 			if self._stop_event.is_set():
 				# close connection
 				print("saliendo")
-				plc.release_handle(var_handle46_1)
+				cap.release()
+				plc.release_handle(hanger_counter)
+				plc.release_handle(var_handle_actual_hook)
+				plc.release_handle(var_handle_full_hr)
+				plc.release_handle(var_handle_full_day)
+				plc.release_handle(var_handle_empty_hr)
+				plc.release_handle(var_handle_empty_day)
 				plc.close()
 				break
 	def stop(self):
