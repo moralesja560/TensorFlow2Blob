@@ -22,7 +22,7 @@ token_Tel = os.getenv('TOK_EN_BOT')
 Jorge_Morales = os.getenv('JORGE_MORALES')
 Paintgroup = os.getenv('PAINTLINE')
 
-RTSP_URL = 'rtsp://root:mubea@10.65.68.2/axis-media/media.amp'
+RTSP_URL = 'rtsp://root:mubea@10.65.68.2:8554/axis-media/media.amp'
 DELAY_SENSOR = 25.4
 os.environ['OPENCV_FFMPEG_CAPTURE_OPTIONS'] = 'rtsp_transport;udp'
 FRAME_SHAPE = 256
@@ -149,8 +149,8 @@ def send_reports(gchs_hora,hour,gchs_dia,todai,g_llena_h,g_llena_d,g_vacia_h,g_v
 					
 	if todai != int(now.strftime("%d")):
 		#send_message(Paintgroup,quote(f"Reporte del día {todai}: {gchs_dia}"),token_Tel)
-		send_message(Paintgroup,quote(f"Reporte del día {todai} : Cap Instalada: 1896 gch \nTotal gancheras: {(gchs_dia):,}. \nGch perdidas {(1896-gchs_dia):,} \nHuecos: {g_vacia_d} \nLlenas: {g_llena_d} "),token_Tel)
-		send_message(Paintgroup,quote(f"Reporte de Producción día: {todai}: Cap Instalada: 37,920 pz. \nTotal: {(gchs_dia*20):,}. \nPzs perdidas {((1896-gchs_dia)*20):,} \nPzs Huecos: {(g_vacia_d*20):,} \nProduccion: {(g_llena_d*20):,} "),token_Tel)
+		#send_message(Paintgroup,quote(f"Reporte del día {todai} : Cap Instalada: 1896 gch \nTotal gancheras: {(gchs_dia):,}. \nGch perdidas {(1896-gchs_dia):,} \nHuecos: {g_vacia_d} \nLlenas: {g_llena_d} "),token_Tel)
+		send_message(Paintgroup,quote(f"Reporte de Producción día: {todai}: \nPzs perdidas {((1896-gchs_dia)*20):,} \nPzs Huecos: {(g_vacia_d*20):,} \nProduccion: {(g_llena_d*20):,} "),token_Tel)
 		#reset a la variable
 		gchs_dia = 0
 		g_vacia_d = 0
@@ -163,8 +163,8 @@ def retrieve_img():
 	cap = cv2.VideoCapture(RTSP_URL, cv2.CAP_FFMPEG)
 	y=0
 	x=0
-	h=1080
-	w=1350
+	h=720 #1080
+	w=920 #1350
 	for x in range(3):
 		success, frame = cap.read()
 		try:
@@ -307,6 +307,9 @@ class hilo1(threading.Thread):
 						print("No hay imagen disponible")
 						send_message(Jorge_Morales,quote(f"No se pudo la imagen en Pintura."),token_Tel)
 						state_save(contador_gchs,hora,contador_gchs_day,day,gch_llena_h,gch_llena_d,gch_vacia_h,gch_vacia_d)
+						gch_llena_h +=1
+						gch_llena_d +=1
+						plc.write_by_name("", 1, plc_datatype=pyads.PLCTYPE_UINT,handle=var_handle_actual_hook)	
 						continue
 					else:
 						end1 = time.time()
