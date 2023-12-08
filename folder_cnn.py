@@ -37,15 +37,24 @@ def load_and_prep_image(filename,img_shape=FRAME_SHAPE):
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 file_list = os.listdir(resource_path(r"resources\mix"))
+n=0
 for filepaths in file_list:
 	ruta_c = resource_path(r"resources\mix")+"\\"+filepaths
 	img = cv2.imread(ruta_c)
-	image = cv2.resize(img,dsize=(FRAME_SHAPE,FRAME_SHAPE), interpolation = cv2.INTER_CUBIC) 
+	y=0
+	x=0
+	h=720 #1080
+	w=920 #1350
+	crop = img[y:y+h, x:x+w]
+	image = cv2.resize(crop,dsize=(FRAME_SHAPE,FRAME_SHAPE), interpolation = cv2.INTER_CUBIC) 
 	final_data = new_model.predict(np.expand_dims(image, axis=0),verbose=0)
 	#final_data = new_model.predict(image,verbose=0)
 	#print(final_data)
 	final_data = final_data.item()
-	#if final_data >0:
-	print(f"original_file : {filepaths}, resultado {final_data}")
+	if final_data == 0:
+		print(f"original_file : {filepaths}, resultado {final_data}")
+		n+=1
+
+print(f"total: {n}")
 
 	
