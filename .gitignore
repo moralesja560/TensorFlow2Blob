@@ -25,12 +25,14 @@ dataset
 dataset2
 dogcatmodel_2
 pizza_model
+resnet_paint_2
 model3_916
 wheels/
 share/python-wheels/
 CNN_savedmodel6
 resnet_pizza
 model_6_paintline
+model_7_paintline
 resources
 resnet_paint
 *.egg-info/

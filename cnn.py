@@ -72,8 +72,8 @@ resnet = ResNet101(
 resnet.trainable = False
 
 #set the directory path WORK COMPUTER
-train_dir = resource_path(r"dataset2\train")
-test_dir = resource_path(r"dataset2\test")
+train_dir = r"E:\tensor\train"
+test_dir = r"E:\tensor\test"
 
 print(train_dir)
 ##-----------------------The baseline model--------------------------#
@@ -327,7 +327,7 @@ def model_5(train_dir,test_dir,train_datagen,valid_datagen,epochs,batch_size):
     optimizer = keras.optimizers.Adam(),
     loss = keras.losses.BinaryCrossentropy(from_logits=True),
     metrics=[keras.metrics.BinaryAccuracy()])
-	cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=resource_path(r"resnet_paint"), monitor='binary_accuracy',save_best_only=True,save_weights_only=False,verbose=1)
+	cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=resource_path(r"resnet_paint_2"), monitor='binary_accuracy',save_best_only=True,save_weights_only=False,verbose=1)
 	model.fit(ds, epochs=epochs,validation_data=ds_test,validation_steps=len(ds_test),callbacks=[cp_callback],verbose=1, workers=8)
 
 def model_6(train_dir,test_dir,train_datagen,valid_datagen,epochs,batch_size):
@@ -362,7 +362,7 @@ def model_6(train_dir,test_dir,train_datagen,valid_datagen,epochs,batch_size):
 	model_base.compile(loss="binary_crossentropy",optimizer=tf.keras.optimizers.Adam(),metrics=['accuracy'])
 
 	#callbacks
-	cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=resource_path(r"model_6_paintline"), monitor='accuracy',save_best_only= True,save_weights_only=False,verbose=1)
+	cp_callback = tf.keras.callbacks.ModelCheckpoint(filepath=resource_path(r"model_7_paintline"), monitor='accuracy',save_best_only= True,save_weights_only=False,verbose=1)
 	#early_cb = tf.keras.callbacks.EarlyStopping(monitor='val_accuracy',min_delta=0.01,patience=2,verbose=1,mode='max')
 	#lr_scheduler = tf.keras.callbacks.LearningRateScheduler(lambda epoch: 0.001 * 0.5 * ( 1 + math.cos( epoch * (math.pi))/(594)))
 
@@ -387,6 +387,8 @@ def data_transformation(zoom,shear,flip_v,flip_h,rotation,w_shift,h_shift):
 
 if __name__ == '__main__':
 	print(datetime.now())
+	s = tf.test.is_built_with_cuda()
+	print(f"Reporte de CUDA: {s}")
 	train_datagen_f,valid_datagen_f = data_transformation(zoom=0.1,shear=0.1,flip_h=False,flip_v=False,rotation=0.1,w_shift=0.1,h_shift=0.1)
 	#model_tr_data = baseline_model(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_f,valid_datagen=valid_datagen_f,epochs=30,batch_size=16)
 	#plot_loss_curves(model_tr_data)
@@ -396,7 +398,7 @@ if __name__ == '__main__':
 	#plot_loss_curves(model_tr_data3)
 	#rain_datagen_g,valid_datagen_g = data_transformation(zoom=0.2,shear=0.2,flip_h=True,flip_v=False,rotation=0.4,w_shift=0.2,h_shift=0.2)
 	#model_tr_data4 = model_4(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_g,valid_datagen=valid_datagen_g,epochs=50,batch_size=16)
-	#model_tr_data5 = model_5(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_f,valid_datagen=valid_datagen_f,epochs=5,batch_size=16)
+	#model_tr_data5 = model_5(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_f,valid_datagen=valid_datagen_f,epochs=5,batch_size=32)
 	#plot_loss_curves(model_tr_data5)
 	model_tr_data6 = model_6(train_dir=train_dir,test_dir=test_dir,train_datagen=train_datagen_f,valid_datagen=valid_datagen_f,epochs=5,batch_size=32)
 	plot_loss_curves(model_tr_data6)
